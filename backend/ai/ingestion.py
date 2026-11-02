@@ -1,4 +1,3 @@
-
 import re
 from pathlib import Path
 
@@ -7,12 +6,10 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
 
 from langchain_chroma import Chroma
+
 # 1. Define the folder containing your transcripts
 DATA_DIR = Path("backend/ai/rag_data/objections-v2")
- 
 
- 
- 
 
 # 3. Configure the text splitter
 text_splitter = RecursiveCharacterTextSplitter(
@@ -40,15 +37,13 @@ for file_path in DATA_DIR.glob("*.txt"):
 
     all_chunks.append(document)
 
-    #chunks = text_splitter.split_documents([document])
+    # chunks = text_splitter.split_documents([document])
 
-   # all_chunks.extend(chunks)
+# all_chunks.extend(chunks)
 
 
 # 5. Inspect the results
 print(f"Total chunks: {len(all_chunks)}")
-
- 
 
 
 embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
