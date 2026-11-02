@@ -15,8 +15,9 @@ def get_query_type(query: str):
 def run_sales_agent(query: str):
     query_type = get_query_type(query).query_type
 
-    return SalesAgent.user_query(
+    stream = SalesAgent.user_query(
         query=query, thread_id=_thread_id, query_type=query_type
     )
+    return query_type, stream
 
  

@@ -3,7 +3,8 @@ import { act, useState } from "react";
 import "./chat.css";
 import Sidebar from "./Sidebar";
 import Composer from "./Composer";
-import ReactMarkdown from "react-markdown";
+
+import MessageResponse from "./MessageResponse";
 const initialChats = [
   { id: 1, title: "Building my AI assistant" },
   { id: 2, title: "Python learning roadmap" },
@@ -58,6 +59,7 @@ function Chat() {
     }));
 
     setInput("");
+    let assistantMessageId = null;
     try {
       const response = await fetch(
         "http://127.0.0.1:8000/auth/chat",
@@ -71,53 +73,94 @@ function Chat() {
         }
       );
 
-     
+      if (!response.ok) {
+        throw new Error(`Chat request failed: ${response.status}`);
+      }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
- 
-      const unique_id =crypto.randomUUID();
+      const unique_id = crypto.randomUUID();
+      assistantMessageId = unique_id;
 
-  setMessages((prev) => ({
-  ...prev,
-  [activeChat]: [
-    ...prev[activeChat],
-    {
-      role: "assistant",
-      content: "",
-      id: unique_id
+      setMessages((prev) => ({
+        ...prev,
+        [activeChat]: [
+          ...(prev[activeChat] || []),
+          {
+            role: "assistant",
+            content: "",
+            data: null,
+            query_type: null,
+            isStreaming: true,
+            id: unique_id,
+          },
+        ],
+      }));
 
-    }
-  ]
-}));
-   while (true) {
-  const { value, done } = await reader.read();
+      const handleSseFrame = (frame) => {
+        let eventName = "message";
+        const dataLines = [];
 
-  if (done) break;
+        for (const line of frame.split(/\r?\n/)) {
+          if (line.startsWith("event:")) eventName = line.slice(6).trim();
+          if (line.startsWith("data:")) dataLines.push(line.slice(5).trim());
+        }
 
-  const chunk = decoder.decode(value, { stream: true });
+        if (dataLines.length === 0) return;
+        const payload = JSON.parse(dataLines.join("\n"));
 
- setMessages((prev) => ({
-  ...prev,
+        setMessages((prev) => ({
+          ...prev,
+          [activeChat]: (prev[activeChat] || []).map((msg) => {
+            if (msg.id !== unique_id) return msg;
 
-  [activeChat]: prev[activeChat].map((msg) =>
-    msg.id === unique_id
-      ? { ...msg, content: msg.content + chunk }
-      : msg
-  )
-}));
- 
+            if (eventName === "metadata") {
+              return { ...msg, query_type: payload.query_type };
+            }
+            if (eventName === "delta") {
+              return { ...msg, content: msg.content + payload.content };
+            }
+            if (eventName === "complete") {
+              return { ...msg, data: payload.response };
+            }
+            if (eventName === "error") {
+              return { ...msg, error: payload.message, isStreaming: false };
+            }
+            if (eventName === "done") {
+              return { ...msg, isStreaming: false };
+            }
+            return msg;
+          }),
+        }));
+      };
 
-   
-}
+      let buffer = "";
+      while (true) {
+        const { value, done } = await reader.read();
+        buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
 
-   
- 
- 
- 
+        const frames = buffer.split(/\r?\n\r?\n/);
+        buffer = frames.pop() || "";
+        for (const frame of frames) handleSseFrame(frame);
+
+        if (done) {
+          if (buffer.trim()) handleSseFrame(buffer);
+          break;
+        }
+      }
       // Navigate to your dashboard here.
     } catch (err) {
-      console.log(err)
+      console.log(err);
+      if (assistantMessageId) {
+        setMessages((prev) => ({
+          ...prev,
+          [activeChat]: (prev[activeChat] || []).map((msg) =>
+            msg.id === assistantMessageId
+              ? { ...msg, error: err.message, isStreaming: false }
+              : msg
+          ),
+        }));
+      }
     } finally {
      setMessageProcessing(false)
     }
@@ -172,11 +215,11 @@ function Chat() {
               <div className="suggestions">
                 <button
                   onClick={() =>
-                    setInput("Help me build an AI-powered application")
+                    setInput("Prospect said let me think about it")
                   }
                 >
                   <span>⌘</span>
-                  Build an application
+                  Prospect said let me think about it
                 </button>
                 <button
                   onClick={() =>
@@ -218,11 +261,10 @@ function Chat() {
                   {message.role === "assistant" && (
                     <div className="assistant-avatar">✳</div>
                   )}
-               <div className="message-content">
-                   <ReactMarkdown >
-  {message.content}
-</ReactMarkdown>
-               </div>
+             
+
+                    <MessageResponse message={message}></MessageResponse>
+        
                 </div>
               ))}
             </div>

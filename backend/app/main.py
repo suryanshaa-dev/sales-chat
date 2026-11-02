@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from backend.app.api.routes.auth import router as auth_router
 from fastapi.responses import StreamingResponse
+import json
 import asyncio
 app = FastAPI()
 from starlette.middleware.sessions import SessionMiddleware
@@ -36,9 +37,24 @@ app.include_router(auth_router)
 @app.post("/auth/chat")
 async def chat(request: Request):
     data = await request.json()
+    query_type, stream = run_sales_agent(data.get("user_query"))
+
+    def encode_sse(event: str, payload: dict) -> str:
+        return f"event: {event}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
+
+    async def event_stream():
+        yield encode_sse("metadata", {"query_type": query_type})
+        try:
+            async for item in stream:
+                yield encode_sse(item["event"], item["data"])
+            yield encode_sse("done", {})
+        except Exception as exc:
+            yield encode_sse("error", {"message": str(exc)})
+
     return StreamingResponse(
-     run_sales_agent(data.get("user_query")),
-        media_type="text/plain",
+        event_stream(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
 
 

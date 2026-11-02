@@ -560,3 +560,7 @@ textarea:focus-visible {
     background: #fff;
     border-radius: 2px;
 }
+
+.message-content p {
+  margin-bottom:0;
+}
