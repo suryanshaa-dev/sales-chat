@@ -6,7 +6,7 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_chroma import Chroma
 from langchain.tools import tool
 from langchain.agents.middleware import wrap_model_call
-
+from backend.ai.schemas.sales_agent import ObjectionResponseOutput
 
 load_dotenv()
 
@@ -30,26 +30,22 @@ class SalesAgent:
             persist_directory="./sales_objections_db",
             collection_name="sales_objections",
         )
-        return vector_store.similarity_search_with_relevance_scores(query=query)
+        return vector_store.similarity_search_with_relevance_scores(query=query)[0]
 
     @classmethod
     def get_sales_agent(cls):
         """Create the agent once, after the class tool has been defined."""
         if cls._sales_agent is None:
             cls._sales_agent = create_agent(
-                model="gpt-5.4-nano",
+                model="gpt-5.4",
                 state_schema=SalesAgentState,
                 tools=[cls.get_objection_documents],
                 middleware=[SalesAgent.filter_tools],
                 system_prompt=(
-                    "You are a sales assistant who helps salespeople. Answer general "
-                    "sales-related questions directly and helpfully. When the user asks "
-                    "for help handling a prospect's objection, use the objection document "
-                    "tool and answer only with a relevant script it returns. If no relevant "
-                    "script is found, say: 'I don't have an answer to that.' Reproduce a "
-                    "retrieved script word for word; do not invent, rewrite, or roleplay it."
-                ),
+    "You are helpfule sales agent"
+),
                 checkpointer=cls.checkpointer,
+                response_format=None,
             )
         return cls._sales_agent
 
@@ -77,6 +73,9 @@ class SalesAgent:
         if query_type=="general":
             print("removed tools")
             request = request.override(tools=[])
+        elif query_type=="objection":
+            request = request.override(response_format=ObjectionResponseOutput)
+
 
         return await handler(request)
 
