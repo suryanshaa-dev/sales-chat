@@ -8,7 +8,7 @@ from langchain.tools import tool, ToolRuntime
 from langchain.agents.middleware import wrap_model_call
 from backend.ai.schemas.sales_agent import ObjectionResponseOutput
 from langgraph.types import Command
-
+from backend.ai.evaluators.objection_evaluator import ObjectionEvaluator
 load_dotenv()
 
 
@@ -46,12 +46,25 @@ class SalesAgent:
 
         if len(docs) > 0:
 
+            grader = ObjectionEvaluator.evaluate(
+                model=runtime.state.get("selected_model"),
+                document=docs[0],
+                user_query=query,
+            )
+            classified_results = [
+                (doc, score, grader.classification if index == 0 else None)
+                for index, (doc, score) in enumerate(results)
+            ]
+
             content = "\n\n".join(
                 f"Source: {doc.metadata.get('source', 'Unknown')}\n"
                 f"Content: {doc.page_content}\n"
-                f"Score: {score}"
-                for doc, score in results
+                f"Score: {score}\n"
+                f"Relevance: {classification}"
+                for doc, score, classification in classified_results
             )
+        else:
+            classified_results = []
 
         return Command(
             update={
@@ -60,7 +73,7 @@ class SalesAgent:
                 "messages": [
                     ToolMessage(
                         content=content,
-                        artifact=results,
+                        artifact=classified_results,
                         tool_call_id=runtime.tool_call_id,
                     )
                 ],
@@ -80,8 +93,7 @@ class SalesAgent:
                 tools=[cls.get_objection_documents],
                 middleware=[SalesAgent.filter_tools],
                 system_prompt=(
-                    "You are helpfule sales agent, for objections query return I don't have an answer to that "
-                    "If no data is retireved from get_objections_document"
+                    "You are helpfule sales agent."
                 ),
                 checkpointer=cls.checkpointer,
                 response_format=None,
@@ -123,8 +135,9 @@ class SalesAgent:
                         "source": doc.metadata.get("source"),
                         "page": doc.metadata.get("page"),
                         "relevance_score": score,
+                        "relevance": classification,
                     }
-                    for doc, score in source_results
+                    for doc, score, classification in source_results
                 ]
                 yield {"event": "sources", "data": {"documents": sources}}
 
@@ -142,14 +155,19 @@ class SalesAgent:
             if isinstance(message, ToolMessage):
                 results = getattr(message, "artifact", None)
 
+                print("tools message below:")
+                print(results)
+
                 if results:
                     sources = [
                         {
                             "source": doc.metadata.get("source"),
                             "page": doc.metadata.get("page"),
                             "relevance_score": score,
+                            "relevance": classification,
+                          
                         }
-                        for doc, score in results
+                        for doc, score, classification in results
                     ]
                     yield {"event": "sources", "data": {"documents": sources}}
 
@@ -160,7 +178,7 @@ class SalesAgent:
     @staticmethod
     @wrap_model_call
     async def filter_tools(request, handler):
-        print("wrap model actibated")
+    
         query_type = request.state.get("query_type", "general")
         selected_model_name = request.state.get("selected_model", "gpt-5.4-nano")
         if selected_model_name not in SalesAgent._available_models:
@@ -170,7 +188,7 @@ class SalesAgent:
 
             request = request.override(tools=[])
         elif query_type == "objection":
-            print("ln below query type == obj")
+          
             retrieval_attempted = request.state.get("retrieval_attempted", False)
             if not retrieval_attempted:
 

@@ -26,6 +26,12 @@ const getPsychologyPoints = (psychology) => {
 
 const ObjectionResponse = ({ message }) => {
   const response = message.data;
+  const relevance = message.sources?.[0]?.relevance;
+  const matchChip = {
+    exact_match: { label: "Exact Match", className: "match-chip--exact" },
+    related_match: { label: "Relevant Match", className: "match-chip--relevant" },
+    no_match: { label: "No Match", className: "match-chip--none" },
+  }[relevance];
 
   const psychologyPoints = getPsychologyPoints(response?.psychology);
 
@@ -38,8 +44,18 @@ const ObjectionResponse = ({ message }) => {
       <header className="objection-heading">
         <span className="objection-eyebrow">OBJECTION:</span>
         <h2>{response.objection_name}</h2>
+
+        {matchChip && (
+          <div className="match-chips" aria-label="Document match classification">
+            <span className={`match-chip ${matchChip.className}`}>
+              {matchChip.label}
+            </span>
+          </div>
+        )}
+
       </header>
 
+  
       <div className="objection-section">
         <h3>Suggested response</h3>
         <div className="objection-dialogue">

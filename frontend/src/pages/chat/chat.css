@@ -627,6 +627,43 @@ textarea:focus-visible {
   letter-spacing: 0.13em;
 }
 
+.match-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px 2px 0;
+}
+
+.match-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 5px 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.match-chip--exact {
+  border-color: #356b50;
+  background: #1e3329;
+  color: #9bdbb4;
+}
+
+.match-chip--relevant {
+  border-color: #6e5d32;
+  background: #342d1e;
+  color: #e7ca83;
+}
+
+.match-chip--none {
+  border-color: #6a3e46;
+  background: #352328;
+  color: #e4a0aa;
+}
+
 .objection-section {
   padding-top: 17px;
 }
