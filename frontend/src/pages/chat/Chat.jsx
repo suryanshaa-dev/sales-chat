@@ -1,19 +1,19 @@
 
-import { act, useState } from "react";
+import { useState } from "react";
 import "./chat.css";
 import Sidebar from "./Sidebar";
 import Composer from "./Composer";
 
 import MessageResponse from "./MessageResponse";
 const initialChats = [
-  { id: 1, title: "Building my AI assistant" },
-  { id: 2, title: "Python learning roadmap" },
-  { id: 3, title: "Marketing strategy" },
+  { id: crypto.randomUUID(), title: "Building my AI assistant" },
+  { id: crypto.randomUUID(), title: "Python learning roadmap" },
+  { id: crypto.randomUUID(), title: "Marketing strategy" },
 ];
 
 function Chat() {
   const [chats, setChats] = useState(initialChats);
-  const [activeChat, setActiveChat] = useState(1);
+  const [activeChat, setActiveChat] = useState(initialChats[0].id);
   const [messages, setMessages] = useState({});
   const [input, setInput] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -23,7 +23,7 @@ function Chat() {
   const currentMessages = messages[activeChat] || [];
 
   function newChat() {
-    const id = Date.now();
+    const id = crypto.randomUUID();
     setChats((prev) => [{ id, title: "New chat" }, ...prev]);
     setActiveChat(id);
     setInput("");
@@ -40,8 +40,6 @@ function Chat() {
    
 
     if (!text) return;
-
-    const currentChat = chats.find((chat) => chat.id === activeChat);
 
     setChats((prev) =>
       prev.map((chat) =>
@@ -70,7 +68,11 @@ function Chat() {
             "Content-Type": "application/json",
           },
           credentials: "include",
-          body: JSON.stringify({ user_query:text, selected_model:selectedModel }),
+          body: JSON.stringify({
+            user_query: text,
+            selected_model: selectedModel,
+            thread_id: activeChat,
+          }),
         }
       );
       console.log("HERE MY REP:")

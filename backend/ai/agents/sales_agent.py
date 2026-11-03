@@ -4,15 +4,17 @@ from langchain.agents import create_agent, AgentState
 from langgraph.checkpoint.memory import InMemorySaver
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_chroma import Chroma
-from langchain.tools import tool
+from langchain.tools import tool, ToolRuntime
 from langchain.agents.middleware import wrap_model_call
 from backend.ai.schemas.sales_agent import ObjectionResponseOutput
-
+from langgraph.types import Command
 load_dotenv()
 
 class SalesAgentState(AgentState):
     query_type: str
     selected_model: str
+    found_documents: bool
+    retrieval_attempted: bool
 
 
 class SalesAgent:
@@ -24,8 +26,8 @@ class SalesAgent:
     _available_models = {"gpt-5.4-nano", "gpt-5.4"}
 
     @staticmethod
-    @tool(response_format="content_and_artifact")
-    def get_objection_documents(query: str):
+    @tool 
+    def get_objection_documents(query: str, runtime: ToolRuntime[None, SalesAgentState]):
         """Find relevant objection documents and their word-for-word scripts."""
         embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
         vector_store = Chroma(
@@ -39,12 +41,26 @@ class SalesAgent:
         content = {}
 
         if(len(docs)>0):
+           
             content =  "\n\n".join(
         f"Source: {doc.metadata.get('source', 'Unknown')}\n"
         f"Content: {doc.page_content}"
         for doc in docs
             )
-         
+
+        return Command(
+         update= {
+             "found_documents": len(docs)>0,
+             "retrieval_attempted":True,
+             "messages": [
+                 ToolMessage(
+                     content = content,
+                     artifact = docs,
+                     tool_call_id = runtime.tool_call_id
+                 )
+             ]
+         }    
+         )
 
         return content, docs
 
@@ -59,8 +75,9 @@ class SalesAgent:
                 tools=[cls.get_objection_documents],
                 middleware=[SalesAgent.filter_tools],
                 system_prompt=(
-    "You are helpfule sales agent"
-),
+                "You are helpfule sales agent, for objections query return I don't have an answer to that "
+                "If no data is retireved from get_objections_document"
+                ),
                 checkpointer=cls.checkpointer,
                 response_format=None,
             )
@@ -80,6 +97,10 @@ class SalesAgent:
         }
 
         if query_type == "objection":
+            # These flags describe this turn's retrieval, so overwrite any values
+            # restored from the thread's checkpoint before starting the turn.
+            agent_input["retrieval_attempted"] = False
+            agent_input["found_documents"] = False
             # Structured fields are only complete after the agent finishes.
             result = await agent.ainvoke(agent_input, config=config)
             result_messages = result.get("messages", [])
@@ -128,6 +149,7 @@ class SalesAgent:
     @staticmethod
     @wrap_model_call
     async def filter_tools(request, handler):
+        print("wrap model actibated")
         query_type = request.state.get("query_type","general")
         selected_model_name = request.state.get("selected_model", "gpt-5.4-nano")
         if selected_model_name not in SalesAgent._available_models:
@@ -138,9 +160,25 @@ class SalesAgent:
           
             request = request.override(tools=[])
         elif query_type=="objection":
-            request = request.override(response_format=ObjectionResponseOutput)
+            print("ln below query type == obj")
+            retrieval_attempted = request.state.get("retrieval_attempted", False)
+            if not retrieval_attempted:
+                
+                request = request.override(response_format=None)
+                request = request.override(tool_choice={
+                            "type": "function",
+                            "function": {
+                                "name": "get_objection_documents",
+                            },
+                        },)
+            else:
+                request = request.override(response_format=ObjectionResponseOutput)
+
+
         
         request= request.override(model=ChatOpenAI(model=selected_model_name))    
+
+
 
         return await handler(request)
 

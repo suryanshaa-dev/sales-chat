@@ -7,8 +7,8 @@ class ObjectionResponseOutput(BaseModel):
      objection_name: str = Field(
         max_length=100,
         description=(
-            "The objection category identified from the retrieved "
-            "sales script's objection-handling framework. "
+            "The objection category identified from the retrieved return None if not found "
+             
             "Maximum 100 characters."
         )
     )

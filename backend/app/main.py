@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from backend.app.api.routes.auth import router as auth_router
 from fastapi.responses import StreamingResponse
 import json
@@ -37,15 +37,18 @@ app.include_router(auth_router)
 @app.post("/auth/chat")
 async def chat(request: Request):
     data = await request.json()
-    query_type, stream = run_sales_agent(data.get("user_query"),data.get('selected_model'))
+    thread_id = data.get("thread_id")
+    if not isinstance(thread_id, str) or not thread_id.strip():
+        raise HTTPException(status_code=400, detail="thread_id is required")
 
     def encode_sse(event: str, payload: dict) -> str:
         return f"event: {event}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
 
     async def event_stream():
-        yield encode_sse("metadata", {"query_type": query_type})
         try:
-            async for item in stream:
+            async for item in run_sales_agent(
+                data.get("user_query"), data.get("selected_model"), thread_id
+            ):
                 yield encode_sse(item["event"], item["data"])
             yield encode_sse("done", {})
         except Exception as exc:
