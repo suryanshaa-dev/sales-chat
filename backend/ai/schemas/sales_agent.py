@@ -21,12 +21,13 @@ class ObjectionResponseOutput(BaseModel):
      "and so on.... ")
  
 
-     psychology: str = Field(
-        max_length=1200,
+     psychology: list[str] = Field(
+        min_length=1,
+        max_length=6,
         description=(
-            "Explain the psychological principles behind the "
-            "retrieved script and why it works. "
-            "Maximum 1200 characters."
+            "Explain why the retrieved script works as a list of 3 to 6 "
+            "concise, specific psychological principles. Each list item must "
+            "express one idea in plain language."
         )
     )
 

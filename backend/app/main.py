@@ -37,7 +37,7 @@ app.include_router(auth_router)
 @app.post("/auth/chat")
 async def chat(request: Request):
     data = await request.json()
-    query_type, stream = run_sales_agent(data.get("user_query"))
+    query_type, stream = run_sales_agent(data.get("user_query"),data.get('selected_model'))
 
     def encode_sse(event: str, payload: dict) -> str:
         return f"event: {event}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"

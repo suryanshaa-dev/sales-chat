@@ -208,31 +208,48 @@ textarea:focus-visible {
   gap: 8px;
 }
 
-.model-selector {
+.model-picker {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border: 0;
-
-  color:#fff;
+  gap: 10px;
+  padding: 6px 10px 6px 12px;
+  border: 1px solid #3d3d3d;
   border-radius: 9px;
-  background: transparent;
-  font-size: 16px;
-  font-weight: 600;
+  background: #282828;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 
-.model-selector:hover {
+.model-picker:hover,
+.model-picker:focus-within {
+  border-color: #666;
   background: #303030;
 }
 
-.model-badge {
-  padding: 3px 5px;
-  border: 1px solid #555;
-  border-radius: 5px;
-  color: #b9b9b9;
-  font-size: 9px;
-  letter-spacing: 0.4px;
+.model-picker-label {
+  color: #9c9c9c;
+  font-size: 11px;
+}
+
+.model-selector {
+  max-width: 180px;
+  padding: 3px 22px 3px 0;
+  border: 0;
+  outline: 0;
+  appearance: none;
+  background-color: transparent;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='m3 4.5 3 3 3-3' stroke='%23b8b8b8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 3px center;
+  color: #f4f4f4;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.model-selector option {
+  background: #282828;
+  color: #f4f4f4;
 }
 
 .chevron {
@@ -549,7 +566,9 @@ textarea:focus-visible {
     cursor: pointer;
     transition: background 0.2s ease;
 }
-
+.source {
+  margin-top:20px;
+}
 .pause-button:hover {
     background: #383838;
 }
@@ -563,4 +582,152 @@ textarea:focus-visible {
 
 .message-content p {
   margin-bottom:0;
+}
+
+.objection-response h2 {
+  margin: 5px 0 0;
+  color: #f4f2fa;
+  font-size: clamp(19px, 2vw, 24px);
+  font-weight: 650;
+  letter-spacing: -0.025em;
+}
+
+.objection-response h3 {
+  margin: 5px 0 12px;
+  color: #f0eef5;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.assistant-message .message-content--objection {
+  width: min(100%, 740px);
+  max-width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #3c3a46;
+  border-radius: 18px;
+  background: #19181e;
+  color: #eceaf1;
+  box-shadow: 0 16px 38px #00000025;
+}
+
+.objection-response {
+  padding: 22px;
+}
+
+.objection-heading {
+  padding: 2px 2px 19px;
+  border-bottom: 1px solid #34313d;
+}
+
+.objection-eyebrow {
+  color: #aaa2bc;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+}
+
+.objection-section {
+  padding-top: 17px;
+}
+
+.objection-dialogue {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.dialogue-turn {
+  max-width: 88%;
+  padding: 12px 15px;
+  border: 1px solid #3a3942;
+  border-radius: 14px;
+  background: #24232a;
+}
+
+.dialogue-turn--you {
+  align-self: flex-start;
+  border-top-left-radius: 5px;
+}
+
+.dialogue-turn--prospect {
+  align-self: flex-end;
+  border-color: #514667;
+  border-top-right-radius: 5px;
+  background: #302a3b;
+}
+
+.dialogue-speaker {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 7px;
+  color: #bab7c2;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.dialogue-turn--prospect .dialogue-speaker {
+  color: #cfbaff;
+}
+
+.dialogue-speaker-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #9a91aa;
+}
+
+.dialogue-turn--prospect .dialogue-speaker-dot {
+  background: #b69be8;
+}
+
+.dialogue-turn p {
+  margin: 0;
+  color: #f0eef4;
+  font-size: 13px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.objection-psychology {
+  margin-top: 20px;
+  padding: 15px 16px;
+  border: 1px solid #383541;
+  border-radius: 12px;
+  background: #201f26;
+}
+
+.objection-psychology h3 {
+  margin: 5px 0 7px;
+}
+
+.objection-psychology ul {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+  padding-left: 19px;
+  color: #c2bfca;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.objection-psychology li {
+  padding-left: 3px;
+}
+
+.objection-psychology li::marker {
+  color: #b69be8;
+}
+
+@media (max-width: 600px) {
+  .objection-response {
+    padding: 17px;
+  }
+
+  .dialogue-turn {
+    max-width: 96%;
+  }
 }

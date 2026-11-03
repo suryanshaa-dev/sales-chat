@@ -18,6 +18,7 @@ function Chat() {
   const [input, setInput] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [messageProcessing, setMessageProcessing] = useState(false);
+  const [selectedModel, setSelectedModel] = useState("gpt-5.4-nano");
 
   const currentMessages = messages[activeChat] || [];
 
@@ -69,10 +70,11 @@ function Chat() {
             "Content-Type": "application/json",
           },
           credentials: "include",
-          body: JSON.stringify({ user_query:text }),
+          body: JSON.stringify({ user_query:text, selected_model:selectedModel }),
         }
       );
-
+      console.log("HERE MY REP:")
+      console.log(response)
       if (!response.ok) {
         throw new Error(`Chat request failed: ${response.status}`);
       }
@@ -122,6 +124,9 @@ function Chat() {
             }
             if (eventName === "complete") {
               return { ...msg, data: payload.response };
+            }
+            if (eventName === "sources") {
+              return { ...msg, sources: payload.documents || [] };
             }
             if (eventName === "error") {
               return { ...msg, error: payload.message, isStreaming: false };
@@ -192,10 +197,18 @@ function Chat() {
                 ☰
               </button>
             )}
-            <button className="model-selector">
-              SalesGPT <span className="model-badge">AI</span>
-              
-            </button>
+            <label className="model-picker">
+              <span className="model-picker-label">Model</span>
+              <select
+                className="model-selector"
+                value={selectedModel}
+                onChange={(event) => setSelectedModel(event.target.value)}
+                aria-label="Select AI model"
+              >
+                <option value="gpt-5.4-nano">gpt-5.4-nano</option>
+                <option value="gpt-5.4">gpt-5.4</option>
+              </select>
+            </label>
           </div>
 
           <button className="profile-button" title="Your profile">

@@ -12,11 +12,11 @@ def get_query_type(query: str):
     return query_type
 
 
-def run_sales_agent(query: str):
+def run_sales_agent(query: str, selected_model: str = "gpt-5.4-nano"):
     query_type = get_query_type(query).query_type
 
     stream = SalesAgent.user_query(
-        query=query, thread_id=_thread_id, query_type=query_type
+        query=query, thread_id=_thread_id, query_type=query_type, selected_model=selected_model
     )
     return query_type, stream
 
