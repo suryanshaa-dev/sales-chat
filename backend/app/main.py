@@ -3,6 +3,7 @@ from backend.app.api.routes.auth import router as auth_router
 from fastapi.responses import StreamingResponse
 import json
 import asyncio
+
 app = FastAPI()
 from starlette.middleware.sessions import SessionMiddleware
 from dotenv import load_dotenv

@@ -11,6 +11,7 @@ load_dotenv()
 
 QueryTypeValue = Literal["general", "objection"]
 
+
 class QueryType(BaseModel):
     query_type: QueryTypeValue = Field(
         description=(
@@ -19,7 +20,6 @@ class QueryType(BaseModel):
             "for other sales-related queries."
         )
     )
-     
 
 
 class QueryRouter:

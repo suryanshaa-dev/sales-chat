@@ -23,9 +23,10 @@ async def run_sales_agent(
     yield {"event": "metadata", "data": {"query_type": query_type}}
 
     stream = SalesAgent.user_query(
-        query=query, thread_id=thread_id, query_type=query_type, selected_model=selected_model
+        query=query,
+        thread_id=thread_id,
+        query_type=query_type,
+        selected_model=selected_model,
     )
     async for item in stream:
         yield item
-
- 

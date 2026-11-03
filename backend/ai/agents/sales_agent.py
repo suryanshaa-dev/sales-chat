@@ -8,7 +8,9 @@ from langchain.tools import tool, ToolRuntime
 from langchain.agents.middleware import wrap_model_call
 from backend.ai.schemas.sales_agent import ObjectionResponseOutput
 from langgraph.types import Command
+
 load_dotenv()
+
 
 class SalesAgentState(AgentState):
     query_type: str
@@ -26,8 +28,10 @@ class SalesAgent:
     _available_models = {"gpt-5.4-nano", "gpt-5.4"}
 
     @staticmethod
-    @tool 
-    def get_objection_documents(query: str, runtime: ToolRuntime[None, SalesAgentState]):
+    @tool
+    def get_objection_documents(
+        query: str, runtime: ToolRuntime[None, SalesAgentState]
+    ):
         """Find relevant objection documents and their word-for-word scripts."""
         embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
         vector_store = Chroma(
@@ -36,38 +40,39 @@ class SalesAgent:
             collection_name="sales_objections",
         )
 
-        results=  vector_store.similarity_search_with_relevance_scores(query=query, k=1)
+        results = vector_store.similarity_search_with_relevance_scores(query=query, k=1)
         docs = [doc for doc, score in results]
         content = {}
 
-        if(len(docs)>0):
-           
-            content =  "\n\n".join(
-        f"Source: {doc.metadata.get('source', 'Unknown')}\n"
-        f"Content: {doc.page_content}"
-        for doc in docs
+        if len(docs) > 0:
+
+            content = "\n\n".join(
+                f"Source: {doc.metadata.get('source', 'Unknown')}\n"
+                f"Content: {doc.page_content}\n"
+                f"Score: {score}"
+                for doc, score in results
             )
 
         return Command(
-         update= {
-             "found_documents": len(docs)>0,
-             "retrieval_attempted":True,
-             "messages": [
-                 ToolMessage(
-                     content = content,
-                     artifact = docs,
-                     tool_call_id = runtime.tool_call_id
-                 )
-             ]
-         }    
-         )
+            update={
+                "found_documents": len(docs) > 0,
+                "retrieval_attempted": True,
+                "messages": [
+                    ToolMessage(
+                        content=content,
+                        artifact=results,
+                        tool_call_id=runtime.tool_call_id,
+                    )
+                ],
+            }
+        )
 
         return content, docs
 
     @classmethod
     def get_sales_agent(cls):
         """Create the agent once, after the class tool has been defined."""
- 
+
         if cls._sales_agent is None:
             cls._sales_agent = create_agent(
                 model="gpt-5.4-nano",
@@ -75,8 +80,8 @@ class SalesAgent:
                 tools=[cls.get_objection_documents],
                 middleware=[SalesAgent.filter_tools],
                 system_prompt=(
-                "You are helpfule sales agent, for objections query return I don't have an answer to that "
-                "If no data is retireved from get_objections_document"
+                    "You are helpfule sales agent, for objections query return I don't have an answer to that "
+                    "If no data is retireved from get_objections_document"
                 ),
                 checkpointer=cls.checkpointer,
                 response_format=None,
@@ -84,7 +89,9 @@ class SalesAgent:
         return cls._sales_agent
 
     @staticmethod
-    async def user_query(query: str, thread_id: str, query_type: str, selected_model: str):
+    async def user_query(
+        query: str, thread_id: str, query_type: str, selected_model: str
+    ):
         if selected_model not in SalesAgent._available_models:
             selected_model = "gpt-5.4-nano"
 
@@ -104,19 +111,20 @@ class SalesAgent:
             # Structured fields are only complete after the agent finishes.
             result = await agent.ainvoke(agent_input, config=config)
             result_messages = result.get("messages", [])
-            source_docs = []
+            source_results = []
             for message in reversed(result_messages):
                 if isinstance(message, HumanMessage):
                     break
                 if isinstance(message, ToolMessage):
-                    source_docs.extend(getattr(message, "artifact", None) or [])
-            if source_docs:
+                    source_results.extend(getattr(message, "artifact", None) or [])
+            if source_results:
                 sources = [
                     {
                         "source": doc.metadata.get("source"),
                         "page": doc.metadata.get("page"),
+                        "relevance_score": score,
                     }
-                    for doc in source_docs
+                    for doc, score in source_results
                 ]
                 yield {"event": "sources", "data": {"documents": sources}}
 
@@ -130,17 +138,20 @@ class SalesAgent:
             agent_input,
             config=config,
             stream_mode="messages",
-        ):  
+        ):
             if isinstance(message, ToolMessage):
-                docs = getattr(message,"artifact",None)
+                results = getattr(message, "artifact", None)
 
-                if docs:
-                    sources= [{
-                        "source": doc.metadata.get("source"),
-                        "page": doc.metadata.get("page")
-                    }
-                    for doc in docs]
-                    yield{"event":"sources","data":{"documents":sources}}
+                if results:
+                    sources = [
+                        {
+                            "source": doc.metadata.get("source"),
+                            "page": doc.metadata.get("page"),
+                            "relevance_score": score,
+                        }
+                        for doc, score in results
+                    ]
+                    yield {"event": "sources", "data": {"documents": sources}}
 
             elif isinstance(message, AIMessage):
                 if isinstance(message.content, str) and message.content:
@@ -150,39 +161,31 @@ class SalesAgent:
     @wrap_model_call
     async def filter_tools(request, handler):
         print("wrap model actibated")
-        query_type = request.state.get("query_type","general")
+        query_type = request.state.get("query_type", "general")
         selected_model_name = request.state.get("selected_model", "gpt-5.4-nano")
         if selected_model_name not in SalesAgent._available_models:
             selected_model_name = "gpt-5.4-nano"
- 
- 
-        if query_type=="general":
-          
+
+        if query_type == "general":
+
             request = request.override(tools=[])
-        elif query_type=="objection":
+        elif query_type == "objection":
             print("ln below query type == obj")
             retrieval_attempted = request.state.get("retrieval_attempted", False)
             if not retrieval_attempted:
-                
+
                 request = request.override(response_format=None)
-                request = request.override(tool_choice={
-                            "type": "function",
-                            "function": {
-                                "name": "get_objection_documents",
-                            },
-                        },)
+                request = request.override(
+                    tool_choice={
+                        "type": "function",
+                        "function": {
+                            "name": "get_objection_documents",
+                        },
+                    },
+                )
             else:
                 request = request.override(response_format=ObjectionResponseOutput)
 
-
-        
-        request= request.override(model=ChatOpenAI(model=selected_model_name))    
-
-
+        request = request.override(model=ChatOpenAI(model=selected_model_name))
 
         return await handler(request)
-
-
- 
-
- 
