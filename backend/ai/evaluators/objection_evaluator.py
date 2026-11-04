@@ -12,7 +12,17 @@ class ClassifyObjectionDocument(BaseModel):
         "exact_match",
         "related_match",
         "no_match"
-    ] = Field(description="Take the user's query and objection response document, and classify it")
+    ] = Field(description= """
+Classify the document based on the user's query:
+
+- exact_match: The document's script directly handles the user's objection.
+- related_match: The script does not directly handle the objection but addresses a similar underlying concern or intent and can be partially applied.
+- no_match: The script does not address the objection or any meaningfully related concern.
+
+Focus on the underlying intent, not just wording or keyword similarity. Different objections may share the same underlying concern.
+
+Return only the classification.
+""")
 
 
 class ObjectionEvaluator(BaseModel):

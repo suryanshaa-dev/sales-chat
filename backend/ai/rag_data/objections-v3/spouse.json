@@ -1,0 +1,46 @@
+{
+  "objection_id": "spouse_001",
+  "heading": "I need to talk to my spouse",
+  "intent": "The prospect wants to consult with another person before making a decision. The script below shows how to handle if the person is spouse. They may need other person's input, agreement, or involvement. The objection can also indicate uncertainty about the decision or the prospect's own desired outcome.",
+  "aliases": [
+    "I need to talk to my spouse",
+    "I need to ask my husband",
+    "I need to ask my wife",
+    "I have to discuss this with my partner",
+    "I can't make this decision without my spouse",
+    "Let me talk it over with my partner",
+    "My spouse needs to be involved"
+  ],
+  "scripts": [
+    {
+      "script_id": "spouse_001_02",
+      "script_line": "How does your spouse feel about you losing the 108 pounds so you're able to walk your daughter down the aisle in 10 to 15 years?",
+      "prospect_response": "I think she'd really want that for me. Being able to walk my daughter down the aisle is something that's very important to me."
+    },
+    {
+      "script_id": "spouse_001_04",
+      "script_line": "I mean, does she want you to lose the 105 pounds so you don't keep putting all that pressure on your heart and possibly have a heart attack?",
+      "prospect_response": "Yes, she'd definitely want me to take care of my health. She's worried about me, and I know she wouldn't want me to keep putting my health at risk."
+    },
+    {
+      "script_id": "spouse_001_06",
+      "script_line": "Oh, well, good for you both. I mean, good for the both of you. You'd be surprised. I talk to a lot of people, and some of them, you know, they just keep pushing it down the road. They never end up losing the weight, and then, you know, guess what ends up happening to them?",
+      "prospect_response": "I don't want to keep putting it off. I've already been thinking about making this change for a while, and I don't want to look back years from now wishing I'd done something sooner."
+    },
+    {
+      "script_id": "spouse_001_07",
+      "script_line": "I mean, for you and your spouse, why is doing this so important to you now?",
+      "prospect_response": "For both of us, it's important because I want to be healthier and have more energy. I don't want this to keep affecting our lives."
+    } 
+  ],
+  "why": [
+    "Objection prevention can help address the prospect's concerns before the spouse objection arises at the end of the conversation.",
+    "Asking how the spouse feels about the prospect's desired outcome connects the decision to a goal the prospect has already expressed.",
+    "Repeating back the specific desired result makes the conversation personal and relevant.",
+    "Using 'feel' can encourage an emotional response rather than turning the conversation into a purely analytical discussion.",
+    "Repeating the consequences of inaction can reinforce why the prospect wants to make a change, but should only use consequences the prospect has already described.",
+    "If the prospect is unsure what their spouse would say, revisiting their stated goal can clarify why the change matters to them.",
+    "Including the spouse in questions can frame the desired outcome as relevant to both people.",
+    "Focusing on why the change matters now can clarify the prospect's motivation and timing."
+  ]
+}

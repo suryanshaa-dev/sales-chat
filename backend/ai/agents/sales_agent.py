@@ -1,3 +1,5 @@
+import json
+
 from dotenv import load_dotenv
 from langchain.messages import HumanMessage, AIMessage, ToolMessage
 from langchain.agents import create_agent, AgentState
@@ -32,7 +34,7 @@ class SalesAgent:
     def get_objection_documents(
         query: str, runtime: ToolRuntime[None, SalesAgentState]
     ):
-        """Find the most relevant objection document to answer user's query with word-for-word scripts."""
+        """Find the most relevant objection document to answer user's query with their word-for-word scripts."""
         embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
         vector_store = Chroma(
             embedding_function=embeddings,
@@ -42,7 +44,8 @@ class SalesAgent:
 
         results = vector_store.similarity_search_with_relevance_scores(query=query, k=1)
         docs = [doc for doc, score in results]
-        content = {}
+        content = "No objection document was found."
+        classified_results = []
 
         if len(docs) > 0:
 
@@ -51,24 +54,28 @@ class SalesAgent:
                 document=docs[0],
                 user_query=query,
             )
-            classified_results = [
-                (doc, score, grader.classification if index == 0 else None)
-                for index, (doc, score) in enumerate(results)
-            ]
-
-            content = "\n\n".join(
-                f"Source: {doc.metadata.get('source', 'Unknown')}\n"
-                f"Content: {doc.page_content}\n"
-                f"Score: {score}\n"
-                f"Relevance: {classification}"
-                for doc, score, classification in classified_results
-            )
-        else:
-            classified_results = []
+            if grader.classification in {"exact_match", "related_match"}:
+                classified_results = [
+                    (docs[0], results[0][1], grader.classification)
+                ]
+                content = (
+                    f"A relevant objection document was found. Use its content "
+                    f"to answer the user.\n"
+                    f"Source: {docs[0].metadata.get('source', 'Unknown')}\n"
+                    f"Content: {docs[0].page_content}\n"
+                    f"Score: {results[0][1]}\n"
+                    f"Relevance: {grader.classification}"
+                )
+            else:
+                content = (
+                    "The retrieved document was evaluated as no_match. Do not "
+                    "use it as a source; tell the user no matching objection "
+                    "document was found."
+                )
 
         return Command(
             update={
-                "found_documents": len(docs) > 0,
+                "found_documents": bool(classified_results),
                 "retrieval_attempted": True,
                 "messages": [
                     ToolMessage(
@@ -93,10 +100,10 @@ class SalesAgent:
                 tools=[cls.get_objection_documents],
                 middleware=[SalesAgent.filter_tools],
                 system_prompt=(
-                    "You are a helpful sales agent. "
-                    "When the user's query relates to objection handling, "
-                    "use the get_objection_documents tool to find the most relevant "
-                    "objection-handling script and use it to answer the query."
+                    "You are a helpful sales agent. For objection queries, use "
+                    "only a document that retrieval marked exact_match or "
+                    "related_match. If retrieval says no_match or no document "
+                    "was found, do not invent a script."
                 ),
                 checkpointer=cls.checkpointer,
                 response_format=None,
@@ -147,6 +154,37 @@ class SalesAgent:
             structured_response = result.get("structured_response")
             if hasattr(structured_response, "model_dump"):
                 structured_response = structured_response.model_dump()
+            if result.get("found_documents") and isinstance(structured_response, dict):
+                retrieved_docs = [
+                    doc
+                    for doc, _score, _classification in source_results
+                ]
+                heading = ""
+                if retrieved_docs:
+                    try:
+                        document_data = json.loads(retrieved_docs[0].page_content)
+                        heading = document_data.get("heading", "")
+                    except (json.JSONDecodeError, AttributeError, TypeError):
+                        heading = ""
+                structured_response["objection_name"] = heading
+            elif not result.get("found_documents"):
+                final_text = next(
+                    (
+                        message.content
+                        for message in reversed(result_messages)
+                        if isinstance(message, AIMessage)
+                        and isinstance(message.content, str)
+                        and message.content
+                    ),
+                    "No matching objection document was found.",
+                )
+                # Preserve the UI payload shape without asking the model to
+                # produce or validate an ObjectionResponseOutput.
+                structured_response = {
+                    "objection_name": "",
+                    "script": final_text,
+                    "psychology": [],
+                }
             yield {"event": "complete", "data": {"response": structured_response}}
             return
 
@@ -194,7 +232,8 @@ class SalesAgent:
           
             retrieval_attempted = request.state.get("retrieval_attempted", False)
             if not retrieval_attempted:
-
+                # The first model call must invoke retrieval. Structured output
+                # is applied on the follow-up call after the tool updates state.
                 request = request.override(response_format=None)
                 request = request.override(
                     tool_choice={
@@ -205,7 +244,13 @@ class SalesAgent:
                     },
                 )
             else:
-                request = request.override(response_format=ObjectionResponseOutput)
+                # Retrieval is a one-shot step for this turn. Prevent the model
+                # from re-entering the tool loop after seeing the evaluation.
+                request = request.override(tools=[])
+                if request.state.get("found_documents", False):
+                    request = request.override(response_format=ObjectionResponseOutput)
+                else:
+                    request = request.override(response_format=None)
 
         request = request.override(model=ChatOpenAI(model=selected_model_name))
 

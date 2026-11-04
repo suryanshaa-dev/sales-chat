@@ -1,0 +1,47 @@
+{
+  "objection_id": "not_sure_works_001",
+  "heading": "I am not sure this will work for me",
+  "intent": "The prospect doubts whether the product, service, or solution will work for their specific situation. Their uncertainty may concern the solution, the seller's ability to deliver, or their own ability to succeed with it.",
+  "aliases": [
+    "I'm not sure this will work for me",
+    "I don't know if this will work",
+    "I'm not convinced this will help me",
+    "What if it doesn't work for me?",
+    "I'm not sure this is right for me",
+    "I don't know if I can make this work",
+    "I've tried things like this before"
+  ],
+  "scripts": [
+{
+"script_id": "not_sure_works_001_01",
+"script_line": "Well, I mean, if it already works for people in your industry, what would prevent it from working for you?",
+"prospect_response": "I'm not really sure. We've tried something similar before, and it didn't work out."
+},
+{
+"script_id": "not_sure_works_001_02",
+"script_line": "Oh, what actually happened?",
+"prospect_response": "We hired another provider, but we didn't get the results we expected."
+},
+{
+"script_id": "not_sure_works_001_03",
+"script_line": "And so when you came to them and you told them what was going on, what did they actually say to you?",
+"prospect_response": "They said they would improve things, but the results never really came through. It left me unsure about trying again."
+},
+{
+"script_id": "not_sure_works_001_04",
+"script_line": "And it's interesting that you told me because a mentor of mine once told me that it's kind of like going to a restaurant, right? You go to a restaurant. Everybody said it's a good restaurant. They hyped it up. You go there and you're like, 'Ah, yeah, the food's not really good.' And on top of that, you go home, you're like, 'Oh, man. My stomach really hurts.' And you get food poisoning. You throw up the food. Now, does that mean you never go eat at any other restaurant the rest of your life? Or does that mean you don't go eat at that restaurant?",
+"prospect_response": "I wouldn't stop going to every restaurant. I'd just avoid that particular one."
+} 
+],
+  "why": [
+    "Clarifying the objection prevents the seller from assuming what the prospect means.",
+    "The prospect's uncertainty may concern the seller, the solution, or their own ability to succeed.",
+    "Referencing relevant examples of success can help explore why the prospect believes their situation may be different.",
+    "Framing the prospect as someone capable of making a thoughtful decision can help build confidence.",
+    "A playful question may reduce tension when delivered appropriately, but should not dismiss a genuine concern.",
+    "Clarifying the perceived time commitment helps distinguish an assumed requirement from the actual commitment.",
+    "Connecting the time commitment to the prospect's stated desired outcome makes the effort more relevant.",
+    "Identity-based framing can connect the solution to the prospect's role and goals when that connection is authentic.",
+    "Tone and delivery influence how the prospect interprets the seller's intention."
+  ]
+}

@@ -8,7 +8,7 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_chroma import Chroma
 
 # 1. Define the folder containing your transcripts
-DATA_DIR = Path("backend/ai/rag_data/objections-v2")
+DATA_DIR = Path("backend/ai/rag_data/objections-v3")
 
 
 # 3. Configure the text splitter
@@ -22,7 +22,7 @@ text_splitter = RecursiveCharacterTextSplitter(
 # 4. Load, clean, and split all text files
 all_chunks = []
 
-for file_path in DATA_DIR.glob("*.txt"):
+for file_path in DATA_DIR.glob("*.json"):
 
     raw_text = file_path.read_text(encoding="utf-8")
 

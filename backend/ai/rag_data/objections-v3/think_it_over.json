@@ -1,0 +1,35 @@
+{
+  "objection_id": "think_it_over_001",
+  "heading": "I just need some time to think it over",
+  "intent": "The prospect is delaying a decision and may be hesitant to reveal their underlying concern.",
+  "aliases": [
+    "I need to think about it",
+    "Let me think it over",
+    "I'll get back to you",
+    "I want to sleep on it",
+    "I'm not ready to decide yet"
+  ],
+  "scripts": [
+    {
+      "script_id": "think_it_over_001_01",
+      "script_line": "Yeah, that's not a problem. What's your time frame on getting back to me in the next day or so, just to see if I'll be available for you?",
+      "prospect_response": "I should have a better idea by tomorrow. Would it be okay if I got back to you then?"
+    },
+    {
+      "script_id": "think_it_over_001_02",
+      "script_line": "Well, yeah, I mean, I'm not sure if I'd be randomly available like that with my schedule. What I can do though, if it helps you, is if you have your calendar handy, I can pull up mine and have you book a specific time with me. That way you don't have to chase me down and vice versa. Would that help you if I did that?",
+      "prospect_response": "Sure, that makes sense. I have my calendar here. How about tomorrow at 3 PM?"
+    },
+    {
+      "script_id": "think_it_over_001_03",
+      "script_line": "Now John, before I go, I guess, what were you wanting to go over in your mind, that way I know what questions you'll have when we talk tomorrow?",
+      "prospect_response": "I guess I'm just trying to make sure this is the right decision. I'm interested, but I still have a few things I'm unsure about."
+    }
+  ],
+  "why": [
+    "Helps the prospect lower their guard instead of making them defensive.",
+    "Establishes a specific follow-up timeframe or calendar commitment.",
+    "Can help uncover the underlying concern, such as money, time, or needing to consult a spouse.",
+    "A curious, non-confrontational tone may encourage the prospect to open up."
+  ]
+}

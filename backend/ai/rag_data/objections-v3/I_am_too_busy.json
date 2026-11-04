@@ -1,0 +1,48 @@
+{
+  "objection_id": "too_busy",
+  "heading": "I am too busy",
+  "intent": "The prospect wants to end or shorten the conversation because they are busy.",
+  "aliases": [
+    "I'm busy",
+    "I don't have time",
+    "I have a meeting",
+    "Can you call me back?",
+    "I can't talk right now",
+    "I'm too busy to talk"
+  ],
+  "scripts": [
+    {
+      "script_id": "agree_and_deframe",
+      "script_line": "Oh yeah, and I've only got a few minutes before my next appointment anyways.",
+      "prospect_response": "Okay, then I can probably spare a couple of minutes."
+    },
+    {
+      "script_id": "neutral_reframe",
+      "script_line": "And just so you know I'm not quite sure we can even help you yet it might not even make sense for you to even have us call you back I'd have to understand probably a little bit more about kind of what you guys are using now for XYZ and the results you're getting from that because maybe you don't even need it",
+      "prospect_response": "We're currently using another provider, but we're not getting the results we expected."
+    },
+     
+    {
+      "script_id": "situation_question_what",
+      "script_line": "What do you use now for",
+      "prospect_response": "We use a software platform for that at the moment."
+    },
+    {
+      "script_id": "schedule_specific_followup",
+      "script_line": "Well yeah it might be hard to randomly get a hold of me like that with my schedule uh what I can do if if it helps you you have your calendar handy I can pull up mine and have you book a specific time with me that way you don't have to chase me down and vice versa would that help you",
+      "prospect_response": "Yes, that would help. I have my calendar here."
+    },
+    {
+      "script_id": "clarify_thinking_point",
+      "script_line": "Hey before I jump off the phone or before I jump off Zoom what was it that you were I guess wanting to go over in your mind just so I know what questions you'll have when we talk on Thursday",
+      "prospect_response": "I wanted to think through whether the timing is right for us."
+    } 
+  ],
+  "why": [
+    "Agreeing and indicating that the seller also has limited time may lower the prospect's guard.",
+    "The seller stays neutral by explaining that they do not yet know whether their solution is suitable for the prospect.",
+    "A situation question shifts the conversation toward understanding the prospect's current setup and results.",
+    "Scheduling a specific follow-up avoids relying on a vague callback and makes the next contact easier to coordinate.",
+    "Asking what the prospect wants to think over or what is holding them back can reveal the concern behind the delay."
+  ]
+}

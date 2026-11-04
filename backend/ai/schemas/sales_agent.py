@@ -5,7 +5,8 @@ class ObjectionResponseOutput(BaseModel):
     objection_name: str = Field(
         max_length=100,
         description=(
-            "The objection category identified from the retrieved return None if not found "
+            "Copy the heading value exactly from the retrieved objection document. "
+            "If no objection document was retrieved, return an empty string. "
             "Maximum 100 characters."
         ),
     )

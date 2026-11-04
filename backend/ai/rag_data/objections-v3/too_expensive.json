@@ -1,0 +1,44 @@
+{
+  "objection_id": "expensive_001",
+  "heading": "It's too expensive",
+  "intent": "The prospect believes the solution costs too much or is unsure whether they can afford it. The underlying concern may be affordability, perceived value, or whether the expected results justify the cost.",
+  "aliases": [
+    "It's too expensive",
+    "That's more than I expected",
+    "I can't afford that",
+    "The price is too high",
+    "It's outside my price range",
+    "I don't have the money for that",
+    "That's a lot of money"
+  ],
+  "scripts": [
+    {
+      "script_id": "expensive_001_01",
+      "script_line": "Yeah, that's not a problem. Um, tell me if you did have the funds, is this something that would work for you? Curious tone.",
+      "prospect_response": "Yes, I believe it could work for me. I can see how it would help me achieve the results I'm looking for. My main concern is whether I can afford it right now."
+    },
+    {
+      "script_id": "expensive_001_02",
+      "script_line": "Tell me if you did have the funding, is this something that would work for you?",
+      "prospect_response": "Yes, if the funding were available, I would be interested. I believe this could help us achieve the results we're looking for."
+    },
+    {
+      "script_id": "expensive_001_03",
+      "script_line": "Yeah, and I can appreciate that money might be an issue. From what you told me, I guess, how do you feel you can resolve that so you can find the funds so that you can...",
+      "prospect_response": "I understand. I might be able to free up some money, but I'd need to review my expenses and see what I could realistically make available."
+    },
+    {
+      "script_id": "expensive_001_04",
+      "script_line": "How do you feel you can resolve that so you can find the funds so that you can...",
+      "prospect_response": "I could look at whether there's a way to make the funds available. If I can find a manageable way to do that, I would be able to move forward with the results we discussed."
+    }
+  ],
+  "why": [
+    "Agreeing with the prospect can reduce defensiveness and create space for a conversation.",
+    "Shifts attention from price alone toward the outcome the prospect wants.",
+    "Explores whether affordability is the main concern or whether the prospect has doubts about the solution's value.",
+    "Connects the potential investment to the prospect's stated goals.",
+    "Encourages the prospect to consider realistic ways to make the investment without assuming they should take on debt or financial strain.",
+    "Results-focused questions early in the sales conversation can help establish value before discussing price."
+  ]
+}
