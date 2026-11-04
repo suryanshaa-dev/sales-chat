@@ -32,7 +32,7 @@ class SalesAgent:
     def get_objection_documents(
         query: str, runtime: ToolRuntime[None, SalesAgentState]
     ):
-        """Find relevant objection documents and their word-for-word scripts."""
+        """Find the most relevant objection document to answer user's query with word-for-word scripts."""
         embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
         vector_store = Chroma(
             embedding_function=embeddings,
@@ -93,7 +93,10 @@ class SalesAgent:
                 tools=[cls.get_objection_documents],
                 middleware=[SalesAgent.filter_tools],
                 system_prompt=(
-                    "You are helpfule sales agent."
+                    "You are a helpful sales agent. "
+                    "When the user's query relates to objection handling, "
+                    "use the get_objection_documents tool to find the most relevant "
+                    "objection-handling script and use it to answer the query."
                 ),
                 checkpointer=cls.checkpointer,
                 response_format=None,
