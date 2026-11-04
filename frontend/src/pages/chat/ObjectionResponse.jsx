@@ -39,6 +39,10 @@ const ObjectionResponse = ({ message }) => {
     return <p>{message.isStreaming ? "Preparing objection response…" : "No structured response was returned."}</p>;
   }
 
+  if (relevance !== "exact_match" && relevance !== "related_match") {
+    return <p className="objection-no-match">{response.script}</p>;
+  }
+
   return (
     <section className="objection-response">
       <header className="objection-heading">
