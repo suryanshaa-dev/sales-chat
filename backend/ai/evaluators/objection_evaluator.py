@@ -4,15 +4,14 @@ from pydantic import BaseModel, Field
 from typing import Literal
 from langchain.messages import HumanMessage
 from langchain_core.documents import Document
+
 load_dotenv()
+
 
 class ClassifyObjectionDocument(BaseModel):
 
-    classification: Literal[
-        "exact_match",
-        "related_match",
-        "no_match"
-    ] = Field(description= """
+    classification: Literal["exact_match", "related_match", "no_match"] = Field(
+        description="""
 Classify the document based on the user's query:
 
 - exact_match: The document's script directly handles the user's objection.
@@ -22,22 +21,26 @@ Classify the document based on the user's query:
 Focus on the underlying intent, not just wording or keyword similarity. Different objections may share the same underlying concern.
 
 Return only the classification.
-""")
+"""
+    )
 
 
 class ObjectionEvaluator(BaseModel):
 
     @staticmethod
-    def evaluate(model:str, document:Document, user_query: str):
-        grader=ChatOpenAI(model=model, temperature=0).with_structured_output(ClassifyObjectionDocument)
+    def evaluate(model: str, document: Document, user_query: str):
+        grader = ChatOpenAI(model=model, temperature=0).with_structured_output(
+            ClassifyObjectionDocument
+        )
         messages = [
-            HumanMessage(content="User's Query:" \
-            f"{user_query}" \
-            "" \
-            "Document contents:" \
-            f"{document.page_content}")
+            HumanMessage(
+                content="User's Query:"
+                f"{user_query}"
+                ""
+                "Document contents:"
+                f"{document.page_content}"
+            )
         ]
 
         result = grader.invoke(messages)
         return result
-

@@ -75,8 +75,7 @@ function Chat() {
           }),
         }
       );
-      console.log("HERE MY REP:")
-      console.log(response)
+      
       if (!response.ok) {
         throw new Error(`Chat request failed: ${response.status}`);
       }

@@ -8,9 +8,10 @@ from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_chroma import Chroma
 from langchain.tools import tool, ToolRuntime
 from langchain.agents.middleware import wrap_model_call
-from backend.ai.schemas.sales_agent import ObjectionResponseOutput
+from backend.ai.schemas.sales_agent import ObjectionResponseOutput, LeadQualificationResponse
 from langgraph.types import Command
 from backend.ai.evaluators.objection_evaluator import ObjectionEvaluator
+
 load_dotenv()
 
 
@@ -55,9 +56,7 @@ class SalesAgent:
                 user_query=query,
             )
             if grader.classification in {"exact_match", "related_match"}:
-                classified_results = [
-                    (docs[0], results[0][1], grader.classification)
-                ]
+                classified_results = [(docs[0], results[0][1], grader.classification)]
                 content = (
                     f"A relevant objection document was found. Use its content "
                     f"to answer the user.\n"
@@ -156,8 +155,7 @@ class SalesAgent:
                 structured_response = structured_response.model_dump()
             if result.get("found_documents") and isinstance(structured_response, dict):
                 retrieved_docs = [
-                    doc
-                    for doc, _score, _classification in source_results
+                    doc for doc, _score, _classification in source_results
                 ]
                 heading = ""
                 if retrieved_docs:
@@ -188,6 +186,18 @@ class SalesAgent:
             yield {"event": "complete", "data": {"response": structured_response}}
             return
 
+        elif query_type == "lead_qualification":
+           
+
+           result = await agent.ainvoke(agent_input, config=config)
+           result_messages = result.get("messages", [])
+           source_results = []
+           for message in reversed(result_messages):
+
+                if isinstance(message, AIMessage):
+                    if isinstance(message.content, str) and message.content:
+                        yield {"event": "complete", "data": {"response": message.content}}
+                        return
         async for message, _metadata in agent.astream(
             agent_input,
             config=config,
@@ -196,9 +206,6 @@ class SalesAgent:
             if isinstance(message, ToolMessage):
                 results = getattr(message, "artifact", None)
 
-                print("tools message below:")
-                print(results)
-
                 if results:
                     sources = [
                         {
@@ -206,7 +213,6 @@ class SalesAgent:
                             "page": doc.metadata.get("page"),
                             "relevance_score": score,
                             "relevance": classification,
-                          
                         }
                         for doc, score, classification in results
                     ]
@@ -219,17 +225,18 @@ class SalesAgent:
     @staticmethod
     @wrap_model_call
     async def filter_tools(request, handler):
-    
+
         query_type = request.state.get("query_type", "general")
         selected_model_name = request.state.get("selected_model", "gpt-5.4-nano")
         if selected_model_name not in SalesAgent._available_models:
             selected_model_name = "gpt-5.4-nano"
 
         if query_type == "general":
-
             request = request.override(tools=[])
+        elif query_type == "lead_qualification":
+            request = request.override(response_format=LeadQualificationResponse)
         elif query_type == "objection":
-          
+
             retrieval_attempted = request.state.get("retrieval_attempted", False)
             if not retrieval_attempted:
                 # The first model call must invoke retrieval. Structured output

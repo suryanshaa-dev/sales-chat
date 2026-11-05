@@ -367,6 +367,14 @@ textarea:focus-visible {
     color: #000;
 }
 
+.assistant-message .message-content:has(.pq-qualification-widget) {
+    flex: 1;
+    width: 100%;
+    max-width: none;
+    padding: 0;
+    background: transparent;
+}
+
 .user-message .message-content {
   max-width: 80%;
   padding: 12px 17px;
@@ -767,4 +775,428 @@ textarea:focus-visible {
   .dialogue-turn {
     max-width: 96%;
   }
+}
+
+
+/* =========================================
+   PROSPECT QUALIFICATION WIDGET
+   All styles are scoped to the parent
+========================================= */
+
+.pq-qualification-widget {
+    width: 100%;
+    max-width: none;
+    font-family: inherit;
+    color: #20231f;
+    box-sizing: border-box;
+}
+
+.pq-qualification-widget *,
+.pq-qualification-widget *::before,
+.pq-qualification-widget *::after {
+    box-sizing: border-box;
+}
+
+.pq-qualification-widget .pq-qualification-card {
+    width: 100%;
+    padding: 22px;
+    border: 1px solid #e8eae6;
+    border-radius: 20px;
+    background: linear-gradient(145deg, #ffffff 0%, #fafbf9 100%);
+    box-shadow: 0 12px 32px rgba(23, 31, 24, 0.08), 0 2px 6px rgba(23, 31, 24, 0.04);
+}
+
+/* Header */
+
+.pq-qualification-widget .pq-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.pq-qualification-widget .pq-eyebrow {
+    margin: 0 0 5px;
+    color: #858b82;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    line-height: 1.3;
+}
+
+.pq-qualification-widget .pq-card-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 650;
+    line-height: 1.3;
+    color: #303830;
+    letter-spacing: -0.025em;
+}
+
+.pq-qualification-widget .pq-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 6px 10px;
+    border: 1px solid #d9eddf;
+    border-radius: 999px;
+    background: #f0f8f2;
+    color: #287344;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.pq-qualification-widget .pq-status-badge::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #36a461;
+    box-shadow: 0 0 0 3px rgba(54, 164, 97, 0.12);
+}
+
+.pq-qualification-widget .pq-status-badge--partial {
+    border-color: #f0e2c8;
+    background: #fbf6eb;
+    color: #92651d;
+}
+
+.pq-qualification-widget .pq-status-badge--partial::before {
+    background: #d39a37;
+    box-shadow: 0 0 0 3px rgba(211, 154, 55, 0.13);
+}
+
+/* Score Section */
+
+.pq-qualification-widget .pq-score-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin-top: 25px;
+    margin-bottom: 22px;
+}
+
+.pq-qualification-widget .pq-score-info {
+    min-width: 0;
+}
+
+.pq-qualification-widget .pq-score-value {
+    margin: 0;
+    color: #202a22;
+    font-size: 38px;
+    font-weight: 650;
+    letter-spacing: -0.055em;
+    line-height: 1.2;
+}
+
+.pq-qualification-widget .pq-score-value span {
+    color: #899087;
+    font-size: 19px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+}
+
+.pq-qualification-widget .pq-score-label {
+    margin-top: 5px;
+    color: #7c827b;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.3;
+}
+
+/* Circular Score Indicator */
+
+.pq-qualification-widget .pq-score-circle {
+    --pq-score: 78%;
+
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    width: 76px;
+    height: 76px;
+    margin-right: 2px;
+
+    border-radius: 50%;
+
+    background: conic-gradient(
+        #42a76a 0%,
+        #42a76a var(--pq-score),
+        #e8eee8 var(--pq-score),
+        #e8eee8 100%
+    );
+}
+
+.pq-qualification-widget .pq-score-circle::before {
+    content: "";
+
+    position: absolute;
+    inset: 7px;
+
+    border-radius: 50%;
+    background: #ffffff;
+}
+
+.pq-qualification-widget .pq-score-circle-value {
+    position: relative;
+    z-index: 1;
+
+    color: #344339;
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+/* Divider */
+
+.pq-qualification-widget .pq-divider {
+    width: 100%;
+    height: 1px;
+    background: #eceeea;
+}
+
+/* Qualification Factors */
+
+.pq-qualification-widget .pq-factors-section {
+    padding-top: 19px;
+    padding-bottom: 0;
+}
+
+.pq-qualification-widget .pq-factors-title {
+    margin: 0 0 8px;
+    color: #333a33;
+    font-size: 13px;
+    font-weight: 650;
+    line-height: 1.3;
+}
+
+.pq-qualification-widget .pq-factor-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+
+    padding: 11px 0;
+    border-bottom: 1px solid #f0f1ee;
+
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.3;
+}
+
+.pq-qualification-widget .pq-factor-table {
+    overflow: hidden;
+    border: 1px solid #eceeea;
+    border-radius: 12px;
+}
+
+.pq-qualification-widget .pq-factor-table-header,
+.pq-qualification-widget .pq-factor-table-row {
+    display: grid;
+    grid-template-columns: minmax(100px, 0.75fr) minmax(110px, 0.8fr) minmax(0, 2.5fr);
+    align-items: start;
+    column-gap: 16px;
+    padding: 12px 14px;
+}
+
+.pq-qualification-widget .pq-factor-table-header {
+    background: #f6f7f4;
+    color: #858b82;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+
+.pq-qualification-widget .pq-factor-table-row {
+    border-top: 1px solid #eef0ec;
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.pq-qualification-widget .pq-factor-table-row .pq-factor-name {
+    color: #343b34;
+    font-weight: 600;
+}
+
+.pq-qualification-widget .pq-factor-table-row .pq-factor-value {
+    text-align: left;
+}
+
+.pq-qualification-widget .pq-factor-evidence {
+    color: #737a71;
+}
+
+.pq-qualification-widget .pq-detail-card {
+    margin-top: 12px;
+    padding: 18px 22px;
+    border: 1px solid #e8eae6;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 5px 18px rgba(23, 31, 24, 0.04);
+}
+
+.pq-qualification-widget .pq-detail-title {
+    margin: 0;
+    color: #333a33;
+    font-size: 13px;
+    font-weight: 650;
+    line-height: 1.4;
+}
+
+.pq-qualification-widget .pq-missing-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.pq-qualification-widget .pq-missing-list li {
+    padding: 7px 10px;
+    border: 1px solid #eee2cd;
+    border-radius: 8px;
+    background: #fcf8f0;
+    color: #86652f;
+    font-size: 11px;
+    line-height: 1.3;
+}
+
+.pq-qualification-widget .pq-summary-card p {
+    margin: 8px 0 0;
+    color: #737a71;
+    font-size: 12px;
+    line-height: 1.65;
+}
+
+.pq-qualification-widget .pq-factor-name {
+    color: #646b63;
+}
+
+.pq-qualification-widget .pq-factor-value {
+    text-align: right;
+    font-weight: 600;
+}
+
+.pq-qualification-widget .pq-strong,
+.pq-qualification-widget .pq-confirmed {
+    color: #328151;
+}
+
+.pq-qualification-widget .pq-moderate,
+.pq-qualification-widget .pq-unconfirmed {
+    color: #a26a22;
+}
+
+/* Footer */
+
+.pq-qualification-widget .pq-card-footer {
+    padding-top: 43px;
+
+    color: #666666;
+    font-size: 24px;
+    font-weight: 400;
+    line-height: 1.3;
+}
+
+/* Responsive */
+
+@media (max-width: 600px) {
+
+    .pq-qualification-widget .pq-qualification-card {
+        padding: 18px;
+        border-radius: 17px;
+    }
+
+    .pq-qualification-widget .pq-card-header {
+        gap: 12px;
+    }
+
+    .pq-qualification-widget .pq-card-title {
+        font-size: 16px;
+    }
+
+    .pq-qualification-widget .pq-status-badge {
+        padding: 6px 9px;
+        font-size: 10px;
+    }
+
+    .pq-qualification-widget .pq-score-section {
+        margin-top: 21px;
+        margin-bottom: 18px;
+        gap: 10px;
+    }
+
+    .pq-qualification-widget .pq-score-value {
+        font-size: 34px;
+    }
+
+    .pq-qualification-widget .pq-score-label {
+        margin-top: 4px;
+        font-size: 11px;
+    }
+
+    .pq-qualification-widget .pq-score-circle {
+        width: 68px;
+        height: 68px;
+        margin-right: 0;
+    }
+
+    .pq-qualification-widget .pq-score-circle::before {
+        inset: 6px;
+    }
+
+    .pq-qualification-widget .pq-score-circle-value {
+        font-size: 15px;
+    }
+
+    .pq-qualification-widget .pq-factors-section {
+        padding-top: 16px;
+        padding-bottom: 0;
+    }
+
+    .pq-qualification-widget .pq-factors-title {
+        margin-bottom: 7px;
+        font-size: 12px;
+    }
+
+    .pq-qualification-widget .pq-factor-table-header,
+    .pq-qualification-widget .pq-factor-table-row {
+        grid-template-columns: minmax(66px, 0.65fr) minmax(78px, 0.7fr) minmax(0, 1.8fr);
+        column-gap: 8px;
+        padding: 10px 9px;
+    }
+
+    .pq-qualification-widget .pq-factor-table-header {
+        font-size: 9px;
+    }
+
+    .pq-qualification-widget .pq-factor-table-row {
+        font-size: 10px;
+    }
+
+    .pq-qualification-widget .pq-detail-card {
+        padding: 15px 17px;
+    }
+
+    .pq-qualification-widget .pq-missing-list li {
+        font-size: 10px;
+    }
+
+    .pq-qualification-widget .pq-factor-row {
+        padding: 10px 0;
+        font-size: 11px;
+    }
+
+    .pq-qualification-widget .pq-card-footer {
+        padding-top: 16px;
+        font-size: 12px;
+    }
 }
