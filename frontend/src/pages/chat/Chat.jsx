@@ -1,45 +1,114 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import "./chat.css";
 import Sidebar from "./Sidebar";
 import Composer from "./Composer";
 
 import MessageResponse from "./MessageResponse";
-const initialChats = [
-  { id: crypto.randomUUID(), title: "Building my AI assistant" },
-  { id: crypto.randomUUID(), title: "Python learning roadmap" },
-  { id: crypto.randomUUID(), title: "Marketing strategy" },
-];
-
+import { API_BASE_URL } from "../../api";
 function Chat() {
-  const [chats, setChats] = useState(initialChats);
-  const [activeChat, setActiveChat] = useState(initialChats[0].id);
+  const navigate = useNavigate();
+  const [chats, setChats] = useState([]);
+  const [activeChat, setActiveChat] = useState(null);
   const [messages, setMessages] = useState({});
   const [input, setInput] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [messageProcessing, setMessageProcessing] = useState(false);
   const [selectedModel, setSelectedModel] = useState("gpt-5.4-nano");
+  const [user, setUser] = useState(null);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
   const currentMessages = messages[activeChat] || [];
+  const activeChatRecord = chats.find((chat) => chat.id === activeChat);
+  const isEmptyNewChat = activeChatRecord?.title === "New chat" && currentMessages.length === 0;
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/auth/me`, { credentials: "include" })
+      .then((response) => {
+        if (response.status === 401) {
+          navigate("/login", { replace: true });
+          return null;
+        }
+        if (!response.ok) throw new Error("Could not load profile");
+        return response.json();
+      })
+      .then((profile) => { if (profile) setUser(profile); })
+      .catch(() => {});
+  }, [navigate]);
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/auth/chats`, { credentials: "include" })
+      .then((response) => {
+        if (response.status === 401) {
+          navigate("/login", { replace: true });
+          return [];
+        }
+        if (!response.ok) throw new Error("Could not load chats");
+        return response.json();
+      })
+      .then((savedChats) => {
+        setChats(savedChats);
+        if (savedChats.length) setActiveChat(savedChats[0].id);
+        else {
+          const id = crypto.randomUUID();
+          setChats([{ id, title: "New chat" }]);
+          setActiveChat(id);
+        }
+      })
+      .catch(() => {
+        const id = crypto.randomUUID();
+        setChats([{ id, title: "New chat" }]);
+        setActiveChat(id);
+      });
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!activeChat) return;
+    fetch(`${API_BASE_URL}/auth/chats/${activeChat}/messages`, { credentials: "include" })
+      .then((response) => {
+        if (response.status === 401) {
+          navigate("/login", { replace: true });
+          return [];
+        }
+        if (!response.ok) throw new Error("Could not load messages");
+        return response.json();
+      })
+      .then((savedMessages) => setMessages((previous) => ({ ...previous, [activeChat]: savedMessages })))
+      .catch(() => {});
+  }, [activeChat, navigate]);
 
   function newChat() {
+    if (isEmptyNewChat) return;
     const id = crypto.randomUUID();
     setChats((prev) => [{ id, title: "New chat" }, ...prev]);
     setActiveChat(id);
     setInput("");
   }
 
+  async function logout() {
+    try {
+      await fetch(`${API_BASE_URL}/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch {
+      // Leave the page even if the network is unavailable.
+    } finally {
+      navigate("/login", { replace: true });
+    }
+  }
+
   async function sendMessage(e) {
     e.preventDefault();
     const text = input.trim();
 
+    if (!text || !activeChat) return;
     setMessageProcessing(true);
  
 
     
    
-
-    if (!text) return;
 
     setChats((prev) =>
       prev.map((chat) =>
@@ -61,7 +130,7 @@ function Chat() {
     let assistantMessageId = null;
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/auth/chat",
+        `${API_BASE_URL}/auth/chat`,
         {
           method: "POST",
           headers: {
@@ -77,6 +146,10 @@ function Chat() {
       );
       
       if (!response.ok) {
+        if (response.status === 401) {
+          navigate("/login", { replace: true });
+          return;
+        }
         throw new Error(`Chat request failed: ${response.status}`);
       }
 
@@ -184,7 +257,7 @@ function Chat() {
   return (
     <div className="app">
        
-       <Sidebar chats={chats} activeChat={activeChat} newChat={newChat} />
+       {sidebarOpen && <Sidebar chats={chats} activeChat={activeChat} setActiveChat={setActiveChat} newChat={newChat} setSidebarOpen={setSidebarOpen} canCreateChat={!isEmptyNewChat} />}
 
       <main className="main">
         <header className="topbar">
@@ -212,9 +285,24 @@ function Chat() {
             </label>
           </div>
 
-          <button className="profile-button" title="Your profile">
-            S
-          </button>
+          <div className="profile-menu-wrap">
+            <button
+              className="profile-button"
+              title="Your profile"
+              aria-label="Open profile menu"
+              aria-expanded={profileMenuOpen}
+              onClick={() => setProfileMenuOpen((open) => !open)}
+            >
+              {(user?.first_name || user?.email || "U").charAt(0).toUpperCase()}
+            </button>
+            {profileMenuOpen && (
+              <div className="profile-menu">
+                <div className="profile-name">{user?.first_name || "Account"}</div>
+                {user?.email && <div className="profile-email">{user.email}</div>}
+                <button className="logout-button" onClick={logout}>Log out</button>
+              </div>
+            )}
+          </div>
         </header>
 
         <section className="conversation">

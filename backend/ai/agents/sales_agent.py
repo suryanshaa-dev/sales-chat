@@ -3,14 +3,17 @@ import json
 from dotenv import load_dotenv
 from langchain.messages import HumanMessage, AIMessage, ToolMessage
 from langchain.agents import create_agent, AgentState
-from langgraph.checkpoint.memory import InMemorySaver
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_chroma import Chroma
 from langchain.tools import tool, ToolRuntime
 from langchain.agents.middleware import wrap_model_call
-from backend.ai.schemas.sales_agent import ObjectionResponseOutput, LeadQualificationResponse
+from backend.ai.schemas.sales_agent import (
+    ObjectionResponseOutput,
+    LeadQualificationResponse,
+)
 from langgraph.types import Command
 from backend.ai.evaluators.objection_evaluator import ObjectionEvaluator
+from backend.ai.evaluators.sales_knowledge_evaluator import SalesKnowledgeEvaluator
 
 load_dotenv()
 
@@ -22,13 +25,69 @@ class SalesAgentState(AgentState):
     retrieval_attempted: bool
 
 
+def serialize_sources(source_results):
+    sources = []
+    for result in source_results:
+        if len(result) == 3:
+            document, score, relevance = result
+        else:
+            document, score = result
+            relevance = None
+        sources.append(
+            {
+                "source": document.metadata.get("source"),
+                "page": document.metadata.get("page"),
+                "relevance_score": score,
+                "relevance": relevance,
+            }
+        )
+    return sources
+
+
 class SalesAgent:
-    checkpointer = InMemorySaver()
     _sales_agent = None
 
     _query_type = None
 
     _available_models = {"gpt-5.4-nano", "gpt-5.4"}
+
+    @staticmethod
+    @tool
+    def sales_knowledge(query: str, runtime: ToolRuntime[None, SalesAgentState]):
+        """
+        Search sales knowledge and return documents relevant to the user's query.
+        """
+
+        embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+        vectorStore = Chroma(
+            embedding_function=embeddings,
+            persist_directory="./sales_knowledge_db",
+            collection_name="sales_knowledge",
+        )
+
+        search_documents = vectorStore.similarity_search_with_relevance_scores(
+            query=query, k=5
+        )
+
+        
+
+        evaluations = SalesKnowledgeEvaluator.evaluate(
+            model=runtime.state.get("selected_model"),
+            documents=[document for document, _score in search_documents],
+            user_query=query,
+        )
+
+        relevant_indexes = {
+            evaluation["index"]
+            for evaluation in evaluations
+            if evaluation["classification"] != "no_match"
+        }
+
+        return [
+            (document, score)
+            for index, (document, score) in enumerate(search_documents)
+            if index in relevant_indexes
+        ]
 
     @staticmethod
     @tool
@@ -96,30 +155,38 @@ class SalesAgent:
             cls._sales_agent = create_agent(
                 model="gpt-5.4-nano",
                 state_schema=SalesAgentState,
-                tools=[cls.get_objection_documents],
+                tools=[cls.get_objection_documents, cls.sales_knowledge],
                 middleware=[SalesAgent.filter_tools],
                 system_prompt=(
-                    "You are a helpful sales agent. For objection queries, use "
+                    "You are a helpful sales agent. For general queries use my sales knowledge. For objection queries, use "
                     "only a document that retrieval marked exact_match or "
                     "related_match. If retrieval says no_match or no document "
                     "was found, do not invent a script."
                 ),
-                checkpointer=cls.checkpointer,
                 response_format=None,
             )
         return cls._sales_agent
 
     @staticmethod
     async def user_query(
-        query: str, thread_id: str, query_type: str, selected_model: str
+        query: str, thread_id: str, query_type: str, selected_model: str,
+        conversation_history: list[dict[str, str]] | None = None,
     ):
         if selected_model not in SalesAgent._available_models:
             selected_model = "gpt-5.4-nano"
 
-        config = {"configurable": {"thread_id": thread_id}}
         agent = SalesAgent.get_sales_agent()
         agent_input = {
-            "messages": [HumanMessage(content=query)],
+            "messages": [
+                *[
+                    HumanMessage(content=message["content"])
+                    if message["role"] == "user"
+                    else AIMessage(content=message["content"])
+                    for message in (conversation_history or [])
+                    if message.get("role") in {"user", "assistant"}
+                ],
+                HumanMessage(content=query),
+            ],
             "query_type": query_type,
             "selected_model": selected_model,
         }
@@ -130,7 +197,7 @@ class SalesAgent:
             agent_input["retrieval_attempted"] = False
             agent_input["found_documents"] = False
             # Structured fields are only complete after the agent finishes.
-            result = await agent.ainvoke(agent_input, config=config)
+            result = await agent.ainvoke(agent_input)
             result_messages = result.get("messages", [])
             source_results = []
             for message in reversed(result_messages):
@@ -139,15 +206,7 @@ class SalesAgent:
                 if isinstance(message, ToolMessage):
                     source_results.extend(getattr(message, "artifact", None) or [])
             if source_results:
-                sources = [
-                    {
-                        "source": doc.metadata.get("source"),
-                        "page": doc.metadata.get("page"),
-                        "relevance_score": score,
-                        "relevance": classification,
-                    }
-                    for doc, score, classification in source_results
-                ]
+                sources = serialize_sources(source_results)
                 yield {"event": "sources", "data": {"documents": sources}}
 
             structured_response = result.get("structured_response")
@@ -187,40 +246,48 @@ class SalesAgent:
             return
 
         elif query_type == "lead_qualification":
-           
 
-           result = await agent.ainvoke(agent_input, config=config)
-           result_messages = result.get("messages", [])
-           source_results = []
-           for message in reversed(result_messages):
+            result = await agent.ainvoke(agent_input)
+            result_messages = result.get("messages", [])
+            source_results = []
+            for message in reversed(result_messages):
+                if isinstance(message, HumanMessage):
+                    break
+                if isinstance(message, ToolMessage):
+                    source_results.extend(getattr(message, "artifact", None) or [])
+            if source_results:
+                yield {
+                    "event": "sources",
+                    "data": {
+                        "documents": serialize_sources(source_results)
+                    },
+                }
+            structured_response = result.get("structured_response")
+            if hasattr(structured_response, "model_dump"):
+                structured_response = structured_response.model_dump()
+            if structured_response is None:
+                structured_response = next(
+                    (message.content for message in reversed(result_messages)
+                     if isinstance(message, AIMessage) and message.content),
+                    "",
+                )
+            yield {"event": "complete", "data": {"response": structured_response}}
+            return
+        else:
+            async for message, _metadata in agent.astream(
+                agent_input,
+                stream_mode="messages",
+            ):
+                if isinstance(message, ToolMessage):
+                    results = getattr(message, "artifact", None)
 
-                if isinstance(message, AIMessage):
+                    if results:
+                        sources = serialize_sources(results)
+                        yield {"event": "sources", "data": {"documents": sources}}
+
+                elif isinstance(message, AIMessage):
                     if isinstance(message.content, str) and message.content:
-                        yield {"event": "complete", "data": {"response": message.content}}
-                        return
-        async for message, _metadata in agent.astream(
-            agent_input,
-            config=config,
-            stream_mode="messages",
-        ):
-            if isinstance(message, ToolMessage):
-                results = getattr(message, "artifact", None)
-
-                if results:
-                    sources = [
-                        {
-                            "source": doc.metadata.get("source"),
-                            "page": doc.metadata.get("page"),
-                            "relevance_score": score,
-                            "relevance": classification,
-                        }
-                        for doc, score, classification in results
-                    ]
-                    yield {"event": "sources", "data": {"documents": sources}}
-
-            elif isinstance(message, AIMessage):
-                if isinstance(message.content, str) and message.content:
-                    yield {"event": "delta", "data": {"content": message.content}}
+                        yield {"event": "delta", "data": {"content": message.content}}
 
     @staticmethod
     @wrap_model_call
@@ -230,10 +297,8 @@ class SalesAgent:
         selected_model_name = request.state.get("selected_model", "gpt-5.4-nano")
         if selected_model_name not in SalesAgent._available_models:
             selected_model_name = "gpt-5.4-nano"
-
-        if query_type == "general":
-            request = request.override(tools=[])
-        elif query_type == "lead_qualification":
+         
+        if query_type == "lead_qualification":
             request = request.override(response_format=LeadQualificationResponse)
         elif query_type == "objection":
 

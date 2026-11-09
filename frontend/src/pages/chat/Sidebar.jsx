@@ -1,4 +1,4 @@
- const Sidebar = ({newChat, chats, activeChat}) => {
+ const Sidebar = ({newChat, chats, activeChat, setActiveChat, setSidebarOpen, canCreateChat}) => {
     return ( <aside className="sidebar">
           <div className="sidebar-top">
             <button
@@ -13,12 +13,13 @@
               className="icon-button"
               onClick={newChat}
               aria-label="New chat"
+              disabled={!canCreateChat}
             >
               ✎
             </button>
           </div>
 
-          <button className="new-chat" onClick={newChat}>
+          <button className="new-chat" onClick={newChat} disabled={!canCreateChat}>
             <span>＋</span> New chat
           </button>
 

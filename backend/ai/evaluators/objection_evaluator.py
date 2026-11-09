@@ -30,7 +30,8 @@ class ObjectionEvaluator(BaseModel):
     @staticmethod
     def evaluate(model: str, document: Document, user_query: str):
         grader = ChatOpenAI(model=model, temperature=0).with_structured_output(
-            ClassifyObjectionDocument
+            ClassifyObjectionDocument,
+            method="function_calling",
         )
         messages = [
             HumanMessage(

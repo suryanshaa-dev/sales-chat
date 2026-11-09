@@ -15,6 +15,7 @@ async def run_sales_agent(
     query: str,
     selected_model: str = "gpt-5.4-nano",
     thread_id: str | None = None,
+    conversation_history: list[dict[str, str]] | None = None,
 ):
     if not thread_id:
         raise ValueError("thread_id is required")
@@ -27,6 +28,7 @@ async def run_sales_agent(
         thread_id=thread_id,
         query_type=query_type,
         selected_model=selected_model,
+        conversation_history=conversation_history or [],
     )
     async for item in stream:
         yield item
